@@ -6,8 +6,11 @@ import utime as time
 import machine
 import json
 from ota import OTAUpdater
+version = 1
 firmware_url = "https://github.com/ticktock509/rm5-tagdecoder/"
-ota_updater = OTAUpdater(firmware_url, "main.py")
+print('version', version)
+ota_updater = OTAUpdater(firmware_url, "main.py", version)
+
 print('loading...')
 state = 'loading'
 last_state = 'off'
