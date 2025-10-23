@@ -1,4 +1,3 @@
-import network
 import urequests
 import os
 import json
@@ -6,12 +5,11 @@ import machine
 from time import sleep
 
 class OTAUpdater:
-    """ This class handles OTA updates. It connects to the Wi-Fi, checks for updates, downloads and installs them."""
-    def __init__(self, ssid, password, repo_url, filename):
+    """ This class handles OTA updates. It checks for updates, downloads and installs them."""
+    def __init__(self, repo_url, filename, version):
         self.filename = filename
-        self.ssid = ssid
-        self.password = password
         self.repo_url = repo_url
+        self.current_version = version
         if "www.github.com" in self.repo_url :
             print(f"Updating {repo_url} to raw.githubusercontent")
             self.repo_url = self.repo_url.replace("www.github","raw.githubusercontent")
@@ -22,29 +20,20 @@ class OTAUpdater:
         print(f"version url is: {self.version_url}")
         self.firmware_url = self.repo_url + 'main/' + filename
 
-        # get the current version (stored in version.json)
-        if 'version.json' in os.listdir():    
-            with open('version.json') as f:
-                self.current_version = int(json.load(f)['version'])
-            print(f"Current device firmware version is '{self.current_version}'")
+#         # get the current version (stored in version.json)
+#         if 'version.json' in os.listdir():    
+#             with open('version.json') as f:
+#                 self.current_version = int(json.load(f)['version'])
+#             print(f"Current device firmware version is '{self.current_version}'")
+# 
+#         else:
+#             self.current_version = 0
+#             # save the current version
+#             with open('version.json', 'w') as f:
+#                 json.dump({'version': self.current_version}, f)
 
-        else:
-            self.current_version = 0
-            # save the current version
-            with open('version.json', 'w') as f:
-                json.dump({'version': self.current_version}, f)
             
-    def connect_wifi(self):
-        """ Connect to Wi-Fi."""
-
-        sta_if = network.WLAN(network.STA_IF)
-        sta_if.active(True)
-        sta_if.connect(self.ssid, self.password)
-        while not sta_if.isconnected():
-            print('.', end="")
-            sleep(0.25)
-        print(f'Connected to WiFi, IP is: {sta_if.ifconfig()[0]}')
-        
+       
     def fetch_latest_code(self)->bool:
         """ Fetch the latest code from the repo, returns False if not found."""
         
@@ -72,8 +61,8 @@ class OTAUpdater:
         self.current_version = self.latest_version
 
         # save the current version
-        with open('version.json', 'w') as f:
-            json.dump({'version': self.current_version}, f)
+        #with open('version.json', 'w') as f:
+        #    json.dump({'version': self.current_version}, f)
         
         # free up some memory
         self.latest_code = None
@@ -95,10 +84,7 @@ class OTAUpdater:
         
     def check_for_updates(self):
         """ Check if updates are available."""
-        
-        # Connect to Wi-Fi
-        self.connect_wifi()
-
+    
         print(f'Checking for latest version... on {self.version_url}')
         response = urequests.get(self.version_url)
         
@@ -113,7 +99,7 @@ class OTAUpdater:
         print(f'latest version is: {self.latest_version}')
         
         # compare versions
-        newer_version_available = True if self.current_version < self.latest_version else False
+        newer_version_available = True if int(self.current_version) < int(self.latest_version) else False
         
         print(f'Newer version available: {newer_version_available}')    
         return newer_version_available
@@ -126,3 +112,4 @@ class OTAUpdater:
                 self.update_and_reset() 
         else:
             print('No new updates available.')
+
